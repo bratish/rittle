@@ -1,7 +1,16 @@
-require 'rubygems'
-require 'littr'
 
-m = Mysql.new("localhost", "root", "", "solaro_development")
-res = m.query("select id, gender from profiles")
-p res
-res.each{|r| p r}
+require 'base'
+
+profiles = Rittle::Base.get_somthing('animal')
+
+p profiles.instance_variables
+profiles.name = "sssssss"
+profiles.category = "aaaaaaaaaaa"
+profiles.insert
+
+
+a = Animal.get_value(:category => 'aaaaaaaaaaa')
+p a.inspect
+
+
+
