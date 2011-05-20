@@ -10,7 +10,6 @@ profiles.insert
 
 
 a = Animal.get_value(:category => 'aaaaaaaaaaa')
-p a.inspect
 
 
 

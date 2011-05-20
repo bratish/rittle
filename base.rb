@@ -3,14 +3,16 @@ module Rittle
   DBH = Mysql.real_connect("localhost", "root", "", "test")
   class Base
     def self.get_somthing(table_name)
-      res = DBH.list_fields("#{table_name}")
+      
       m = model_for_table(table_name)
+      res = DBH.list_fields("#{table_name}")
       set_fields(m, res)       
     end
     
     def self.model_for_table(table_name)
       klass = Class.new Base
-      model_name = Object.const_set(table_name.capitalize, klass)
+      model_name = get_model_name(table_name)
+      model_name = Object.const_set(model_name.capitalize, klass)
     end
     
     def self.set_fields(m, res)
@@ -24,7 +26,10 @@ module Rittle
     end
     
     def insert
-      DBH.query("INSERT INTO animal (name, category)
+      fields = instance_variables.map{|iv| iv.gsub("@", "")}
+      columns = fields.join(",").to_s
+      p columns
+      DBH.query("INSERT INTO #{get_table_name} (#{columns})
                    VALUES
                      ('#{name}', '#{category}')")
     end
@@ -34,18 +39,26 @@ module Rittle
       options.each_pair do |key, value|
         conditions = conditions + "#{key.to_s} = '#{value}'"
       end      
-      res = DBH.query("SELECT * FROM animal where #{conditions}")
+      res = DBH.query("SELECT * FROM #{new.get_table_name} where #{conditions}")
       
       fill_value(res)
     end
     
+    def get_table_name
+      word = self.class.to_s.dup
+      word.gsub!(/::/, '/')
+      word.gsub!(/([A-Z]+)([A-Z][a-z])/,'\1_\2')
+      word.gsub!(/([a-z\d])([A-Z])/,'\1_\2')
+      word.tr!("-", "_")
+      word.downcase!
+      word
+    end
+    
     def self.fill_value(res)
-      arr = []
-      
+      arr = []      
       res.each_hash do |row|
         a = self.new
         row.each do |key, value|
-          p "'@#{key}',#{value}"
           a.instance_variable_set("@#{key}",value)
         end
         arr << a
@@ -53,6 +66,10 @@ module Rittle
       arr
     end
     
+    def self.get_model_name(table_name)   
+      p DBH.list_tables(table_name)   
+      DBH.list_tables(table_name).size ? table_name.split("_").map{|x| x.capitalize}.join : "#{table_name.split("_").map{|x| x.capitalize}.join}s"     
+    end
   end
 end
 
