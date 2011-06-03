@@ -26,12 +26,19 @@ module Rittle
     end
     
     def insert
-      fields = instance_variables.map{|iv| iv.gsub("@", "")}
-      columns = fields.join(",").to_s
-      p columns
-      DBH.query("INSERT INTO #{get_table_name} (#{columns})
+      values_and_columns = *get_columns_and_values
+      DBH.query("INSERT INTO #{get_table_name} (#{values_and_columns[0]})
                    VALUES
-                     ('#{name}', '#{category}')")
+                     (#{values_and_columns[1]})")
+    end
+    
+    def get_columns_and_values
+      column_value_hash = {:column_names => [], :values => []}
+      column_value_hash[:column_names] << instance_variables.map{|iv| iv.gsub("@", "")}
+      column_value_hash[:values] << instance_variables.map{|iv| "'#{instance_variable_get(iv)}'"}
+      columns = column_value_hash[:column_names].join(",").to_s
+      values = column_value_hash[:values].join(",").to_s
+      [columns, values]
     end
     
     def self.get_value(options = {})      
