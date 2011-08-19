@@ -1,12 +1,11 @@
-require 'rittle'
+require './rittle'
 module Rittle
   DBH = Mysql.real_connect("localhost", "root", "", "test")
   class Base
-    def self.get_somthing(table_name)
-      
+    def self.get_object(table_name)
       m = model_for_table(table_name)
       res = DBH.list_fields("#{table_name}")
-      set_fields(m, res)       
+      set_fields(m, res)
     end
     
     def self.model_for_table(table_name)
@@ -16,7 +15,7 @@ module Rittle
     end
     
     def self.set_fields(m, res)
-      column_names = res.fetch_fields.collect{|r| r.name}    
+      column_names = res.fetch_fields.collect{|r| r.name}
       m.instance_eval do
         column_names.each do |cname|
           attr_accessor cname
@@ -32,9 +31,19 @@ module Rittle
                      (#{values_and_columns[1]})")
     end
     
+    def update_column(to_update)
+      update_string = []
+      to_update.each do |key, value|
+        instance_variable_set("@#{key}",value)
+        update_string << "#{key} = '#{value}'"
+      end
+      p "UPDATE #{get_table_name} SET #{update_string.join(', ')} where id=#{id}"
+      DBH.query("UPDATE #{get_table_name} SET #{update_string.join(', ')} where id=#{id}")      
+    end
+    
     def get_columns_and_values
       column_value_hash = {:column_names => [], :values => []}
-      column_value_hash[:column_names] << instance_variables.map{|iv| iv.gsub("@", "")}
+      column_value_hash[:column_names] << instance_variables.map{|iv| iv.to_s.gsub("@", "")}
       column_value_hash[:values] << instance_variables.map{|iv| "'#{instance_variable_get(iv)}'"}
       columns = column_value_hash[:column_names].join(",").to_s
       values = column_value_hash[:values].join(",").to_s
@@ -46,8 +55,7 @@ module Rittle
       options.each_pair do |key, value|
         conditions = conditions + "#{key.to_s} = '#{value}'"
       end      
-      res = DBH.query("SELECT * FROM #{new.get_table_name} where #{conditions}")
-      
+      res = DBH.query("SELECT * FROM #{new.get_table_name} where #{conditions}")      
       fill_value(res)
     end
     
@@ -82,5 +90,4 @@ end
 
 
 
-  
   
