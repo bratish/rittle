@@ -37,7 +37,6 @@ module Rittle
         instance_variable_set("@#{key}",value)
         update_string << "#{key} = '#{value}'"
       end
-      p "UPDATE #{get_table_name} SET #{update_string.join(', ')} where id=#{id}"
       DBH.query("UPDATE #{get_table_name} SET #{update_string.join(', ')} where id=#{id}")      
     end
     
@@ -50,12 +49,23 @@ module Rittle
       [columns, values]
     end
     
-    def self.get_value(options = {})      
-      conditions = ""      
-      options.each_pair do |key, value|
-        conditions = conditions + "#{key.to_s} = '#{value}'"
-      end      
-      res = DBH.query("SELECT * FROM #{new.get_table_name} where #{conditions}")      
+    def self.get_row(options = {}) 
+      get_rows.first
+    end
+    
+    def self.get_rows(options = {}) 
+      columns = DBH.list_fields("#{new.get_table_name}").collect(&:Field)
+      puts columns.inspect
+      options.each {|key, value| options.delete(key) unless columns.include?(key)} 
+      where = ""
+      conditions = []
+      unless options.empty?
+        where  = "Where"
+        options.each do |key, value|
+          conditions << "#{key}=#{value}"
+        end
+      end
+      res = DBH.query("SELECT * FROM #{new.get_table_name} #{where} #{conditions.join('and')}")      
       fill_value(res)
     end
     
@@ -67,6 +77,22 @@ module Rittle
       word.tr!("-", "_")
       word.downcase!
       word
+    end
+    
+    def remove
+      DBH.query("Delete from #{get_table_name} where id=#{id}")
+    end
+    
+    def self.remove(options = {})
+      where = ""
+      conditions = []
+      unless options.empty?
+        where  = "Where"
+        options.each do |key, value|
+          conditions << "#{key}=#{value}"
+        end
+      end
+      DBH.query("Delete from #{new.get_table_name} #{where} #{conditions.join('and')}")
     end
     
     def self.fill_value(res)
@@ -81,11 +107,12 @@ module Rittle
       arr
     end
     
-    def self.get_model_name(table_name)   
-      p DBH.list_tables(table_name)   
+    def self.get_model_name(table_name)
       DBH.list_tables(table_name).size ? table_name.split("_").map{|x| x.capitalize}.join : "#{table_name.split("_").map{|x| x.capitalize}.join}s"     
     end
   end
+  
+  
 end
 
 

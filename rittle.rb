@@ -953,7 +953,7 @@ CR_UNKNOWN_ERROR=2000;CR_SOCKET_CREATE_ERROR=2001;CR_CONNECTION_ERROR=2002;CR_CO
 
   dir = File.dirname __FILE__
 
-  VERSION = 20904; MYSQL_UNIX_PORT = "/tmp/mysql.sock"; MYSQL_TCP_PORT = 3306
+  VERSION = 20904; MYSQL_UNIX_PORT = "/var/run/mysqld/mysqld.sock"; MYSQL_TCP_PORT = 3306
 
   attr_reader :charset               # character set of MySQL connection
   attr_reader :affected_rows         # number of affected records by insert/update/delete.
