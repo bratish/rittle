@@ -24,8 +24,8 @@ module Rittle
       return m.new
     end
     
-    def insert
-      values_and_columns = *get_columns_and_values
+    def insert(options = {})
+      values_and_columns = *get_columns_and_values(options)
       DBH.query("INSERT INTO #{get_table_name} (#{values_and_columns[0]})
                    VALUES
                      (#{values_and_columns[1]})")
@@ -40,32 +40,26 @@ module Rittle
       DBH.query("UPDATE #{get_table_name} SET #{update_string.join(', ')} where id=#{id}")      
     end
     
-    def get_columns_and_values
-      column_value_hash = {:column_names => [], :values => []}
-      column_value_hash[:column_names] << instance_variables.map{|iv| iv.to_s.gsub("@", "")}
-      column_value_hash[:values] << instance_variables.map{|iv| "'#{instance_variable_get(iv)}'"}
-      columns = column_value_hash[:column_names].join(",").to_s
-      values = column_value_hash[:values].join(",").to_s
+    def get_columns_and_values(options)
+      calumn_values = {} 
+      column_values = instance_variables.inject({}){|column_values, iv| column_values.merge!(iv.to_s.gsub("@", "").to_sym => "'#{instance_variable_get(iv)}'")}
+      opt = {}
+      options.each do |key, value|
+        opt[key] = "'#{value}'" 
+      end
+      column_values.merge!(opt)
+      columns = column_values.keys.join(",").to_s
+      values = column_values.values.join(",").to_s
+
       [columns, values]
     end
     
     def self.get_row(options = {}) 
-      get_rows.first
+      get_rows(options).first
     end
     
-    def self.get_rows(options = {}) 
-      columns = DBH.list_fields("#{new.get_table_name}").collect(&:Field)
-      puts columns.inspect
-      options.each {|key, value| options.delete(key) unless columns.include?(key)} 
-      where = ""
-      conditions = []
-      unless options.empty?
-        where  = "Where"
-        options.each do |key, value|
-          conditions << "#{key}=#{value}"
-        end
-      end
-      res = DBH.query("SELECT * FROM #{new.get_table_name} #{where} #{conditions.join('and')}")      
+    def self.get_rows(options = {})
+      res = DBH.query("SELECT * FROM #{new.get_table_name} #{self.build_conditions(options)}")
       fill_value(res)
     end
     
@@ -83,16 +77,8 @@ module Rittle
       DBH.query("Delete from #{get_table_name} where id=#{id}")
     end
     
-    def self.remove(options = {})
-      where = ""
-      conditions = []
-      unless options.empty?
-        where  = "Where"
-        options.each do |key, value|
-          conditions << "#{key}=#{value}"
-        end
-      end
-      DBH.query("Delete from #{new.get_table_name} #{where} #{conditions.join('and')}")
+    def self.remove(options = {})      
+      DBH.query("Delete from #{new.get_table_name} #{build_conditions(options)}")
     end
     
     def self.fill_value(res)
@@ -110,9 +96,19 @@ module Rittle
     def self.get_model_name(table_name)
       DBH.list_tables(table_name).size ? table_name.split("_").map{|x| x.capitalize}.join : "#{table_name.split("_").map{|x| x.capitalize}.join}s"     
     end
-  end
-  
-  
+    
+    def self.build_conditions(options)
+      where = ""
+      conditions = []
+      unless options.empty?
+        where  = "Where"
+        options.each do |key, value|
+          conditions << "#{key}='#{value}'"
+        end
+      end
+      return "#{where} #{conditions.join(' and ')}"
+    end
+  end  
 end
 
 

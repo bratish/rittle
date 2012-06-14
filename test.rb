@@ -1,21 +1,18 @@
 require './base'
 
 
-profiles = Rittle::Base.get_object('animal')
-p profiles.instance_variables
-profiles.name = "sssssss"
-profiles.category = "aaaaaaaaaaa"
-profiles.insert
+animal = Rittle::Base.get_object('animal')
 
+animal.name = "wrong"
+animal.category = "wrong"
+animal.insert #saves Data into the database
 
-a = Animal.get_rows(:category => 'aaaaaaaaaaa', :aaa => "eeee")
-
-p a
-
-a = Animal.get_row(:category => 'aaaaaaaaaaa', :aaa => "eeee")
-
-a.first.update_column(:name =>"abcd", :category => "DOG")
-
-a.first.remove
-Animal.remove
+animal1 = Rittle::Base.get_object('animal')
+animal1.insert(:name => "Cow", :category => "Good") #saves Data into the database
+animals = Animal.get_rows(:category => 'wrong') #get an array of object
+Animal.get_row(:category => 'wrong') #get single array of object
+animals.first.update_column(:name =>"pet", :category => "DOG") #update all rows matching the conditions
+animals.first.remove #remove the row from db for object
+Animal.remove(:category => 'Good') #remove all rows matching the conditions
+Animal.remove #empty the table
 
