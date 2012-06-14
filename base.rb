@@ -40,6 +40,15 @@ module Rittle
       DBH.query("UPDATE #{get_table_name} SET #{update_string.join(', ')} where id=#{id}")      
     end
     
+    def self.update_column(condition = {}, options = {})
+      update_string = []
+      options.each do |key, value|
+        instance_variable_set("@#{key}",value)
+        update_string << "#{key} = '#{value}'"
+      end
+      DBH.query("UPDATE #{self.new.get_table_name} SET #{update_string.join(', ')} #{self.build_conditions(condition)}")      
+    end
+    
     def get_columns_and_values(options)
       calumn_values = {} 
       column_values = instance_variables.inject({}){|column_values, iv| column_values.merge!(iv.to_s.gsub("@", "").to_sym => "'#{instance_variable_get(iv)}'")}
