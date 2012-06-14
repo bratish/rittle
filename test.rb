@@ -20,3 +20,4 @@ a.first.update_column(:name =>"abcd", :category => "DOG")
 
 
 
+Testing the changes
