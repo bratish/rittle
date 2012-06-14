@@ -25,10 +25,10 @@ module Rittle
     end
     
     def insert(options = {})
-      values_and_columns = *get_columns_and_values(options)
-      DBH.query("INSERT INTO #{get_table_name} (#{values_and_columns[0]})
+      values_and_columns = get_columns_and_values(options)
+      DBH.query("INSERT INTO #{get_table_name} (#{values_and_columns.keys.join(',')})
                    VALUES
-                     (#{values_and_columns[1]})")
+                     (#{values_and_columns.values.join(',')})")
     end
     
     def update_column(to_update)
@@ -57,10 +57,6 @@ module Rittle
         opt[key] = "'#{value}'" 
       end
       column_values.merge!(opt)
-      columns = column_values.keys.join(",").to_s
-      values = column_values.values.join(",").to_s
-
-      [columns, values]
     end
     
     def self.get_row(options = {}) 
